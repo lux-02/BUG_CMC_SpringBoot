@@ -1,64 +1,76 @@
 package com.example.board.domain;
 
+import com.example.board.exception.UnauthorizedException;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "posts")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 500)
     private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // [중요] 작성자와의 관계 (N : 1)
-    @ManyToOne
-    @JoinColumn(name = "user_id") // DB에 생성될 컬럼 이름
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // [중요] 카테고리와의 관계 (N : 1)
-    @ManyToOne
-    @JoinColumn(name = "category_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Post() {}
-
-    public Post(String title, String content, User user, Category category) {
+    @Builder
+    private Post(String title, String content, User user, Category category, LocalDateTime createdAt) {
         this.title = title;
         this.content = content;
         this.user = user;
         this.category = category;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
 
-    // Getter
-    public Long getId() { return id; }
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
+    // 팩토리 메서드
+    public static Post create(String title, String content, User author, Category category) {
+        return Post.builder()
+                .title(title)
+                .content(content)
+                .user(author)
+                .category(category)
+                .build();
+    }
 
-    // [추가] 게시글 수정 메서드 (비즈니스 로직)
-    /*
-    왜 Setter(setTitle)를 안 쓰고 update를 만드나요?
-    무작정 Setter를 열어두면 누가 어디서 데이터를 바꿨는지 찾기 힘듭니다.
-    이렇게 update라는 이름으로 명확하게 "수정할 때만 써!"라고 만들어두는 게
-    유지보수에 훨씬 좋습니다.
-    */
+    // 비즈니스 로직: 권한 검증을 도메인에서 처리
+    public boolean isOwnedBy(User user) {
+        return this.user.getId().equals(user.getId());
+    }
 
-    public void update(String title, String content) {
+    public void validateOwnership(User user) {
+        if (!isOwnedBy(user)) {
+            throw new UnauthorizedException("작성자만 수정/삭제할 수 있습니다.");
+        }
+    }
+
+    // 비즈니스 로직: 수정
+    public void update(String title, String content, User editor) {
+        validateOwnership(editor);
         this.title = title;
         this.content = content;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public Category getCategory() {
-        return category;
     }
 
 }

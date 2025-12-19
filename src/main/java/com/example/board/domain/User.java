@@ -1,40 +1,50 @@
 package com.example.board.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users") // DB 예약어 피하기 위해 테이블명을 users로 지정
+@Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING) // Enum을 문자로 DB에 저장 (USER, ADMIN)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // 1. JPA용 기본 생성자 (막아둠)
-    public User() {}
-
-    // 2. [추가] 테스트나 실제 로직에서 쓸 '전체 생성자' (열어둠)s
-    public User(String email, String password, Role role) {
+    @Builder
+    private User(String email, String password, Role role, LocalDateTime createdAt) {
         this.email = email;
         this.password = password;
         this.role = role;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
 
-    // Getter (값 꺼내기용)
-    public Long getId() { return id; }
-    public String getEmail() { return email; }
-    public Role getRole() { return role; }
-    public String getPassword() {
-        return password;
+    // 비즈니스 메서드
+    public void changePassword(String newEncodedPassword) {
+        this.password = newEncodedPassword;
+    }
+
+    public boolean isAdmin() {
+        return this.role == Role.ADMIN;
     }
 }

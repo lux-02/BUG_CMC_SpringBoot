@@ -1,22 +1,26 @@
 package com.example.board.dto;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class PostCreateRequest {
-    private Long userId;
     private Long categoryId;
     private String title;
     private String content;
 
-    public PostCreateRequest() {}
-
-    public PostCreateRequest(Long userId, Long categoryId, String title, String content) {
-        this.userId = userId;
-        this.categoryId = categoryId;
-        this.title = title;
-        this.content = content;
+    public static PostCreateRequest of(Long categoryId, String title, String content) {
+        return PostCreateRequest.builder()
+                .categoryId(categoryId)
+                .title(title)
+                .content(content)
+                .build();
     }
-
-    public Long getUserId() { return userId; }
-    public Long getCategoryId() { return categoryId; }
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
 }
+

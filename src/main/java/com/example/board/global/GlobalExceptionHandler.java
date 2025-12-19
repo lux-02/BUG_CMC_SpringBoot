@@ -1,17 +1,51 @@
 package com.example.board.global;
 
+import com.example.board.exception.CategoryNotFoundException;
+import com.example.board.exception.PostNotFoundException;
+import com.example.board.exception.UnauthorizedException;
+import com.example.board.exception.UserNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice // 모든 컨트롤러 옆에서 대기하다가 에러를 낚아챕니다
+/**
+ * 전역 예외 핸들러
+ * 개선 사항:
+ * 1. 커스텀 예외별 세밀한 응답
+ * 2. 명확한 HTTP 상태 코드 (404, 403 등)
+ */
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 우리가 Service에서 "존재하지 않는 회원입니다" 하고 던졌던 그 에러(IllegalArgumentException)를 잡습니다.
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<String> handlePostNotFoundException(PostNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<String> handleCategoryNotFoundException(CategoryNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<String> handleUnauthorizedException(UnauthorizedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
-        // 500 에러(서버 잘못) 대신 400 에러(클라이언트 잘못)로 바꾸고,
-        // Service에서 적은 메시지(e.getMessage())를 그대로 보여줍니다.
-        return ResponseEntity.status(400).body("오류 발생: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("오류 발생: " + e.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("서버 오류가 발생했습니다: " + e.getMessage());
     }
 }

@@ -3,85 +3,80 @@ package com.example.board.service;
 import com.example.board.domain.Category;
 import com.example.board.domain.Post;
 import com.example.board.domain.User;
+import com.example.board.exception.CategoryNotFoundException;
+import com.example.board.exception.PostNotFoundException;
+import com.example.board.exception.UserNotFoundException;
 import com.example.board.repository.CategoryRepository;
 import com.example.board.repository.PostRepository;
 import com.example.board.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 게시글 서비스
+ * 개선 사항:
+ * 1. 커스텀 예외 사용 (의미론적으로 명확)
+ * 2. 도메인 로직 활용 (Post.update에서 권한 검증)
+ * 3. 명확한 트랜잭션 범위 (메서드별)
+ */
 @Service
-@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, CategoryRepository categoryRepository) {
-        this.postRepository = postRepository;
-        this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
-    }
-
-    // [게시글 작성]
     @Transactional
     public Long writePost(Long userId, Long categoryId, String title, String content) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new CategoryNotFoundException(categoryId));
 
-        Post post = new Post(title, content, user, category);
+        // Builder 패턴 사용
+        Post post = Post.builder()
+                .title(title)
+                .content(content)
+                .user(user)
+                .category(category)
+                .build();
+
         postRepository.save(post);
-
         return post.getId();
     }
 
-    // [게시글 목록 조회]
+    @Transactional(readOnly = true)
     public List<Post> findAllPosts() {
         return postRepository.findAll();
     }
 
-    // [특정 게시글 조회]
-    public Post findOne(Long postId) {
+    @Transactional(readOnly = true)
+    public Post getPostOrThrow(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+                .orElseThrow(() -> new PostNotFoundException(postId));
     }
 
-    // ================= [새로 추가된 기능] =================
-
-    // [게시글 수정]
     @Transactional
-    public void updatePost(Long postId, Long currentUserId, String newTitle, String newContent) {
-        // 1. 글 찾기
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+    public void updatePost(Long postId, User currentUser, String newTitle, String newContent) {
+        Post post = getPostOrThrow(postId);
 
-        // 2. 작성자 검증 (글쓴이 ID vs 현재 로그인한 사람 ID)
-        if (!post.getUser().getId().equals(currentUserId)) {
-            throw new IllegalArgumentException("작성자만 수정할 수 있습니다.");
-        }
-
-        // 3. 내용 수정 (JPA가 변경된 것을 감지하고 알아서 DB에 UPDATE 날려줌)
-        post.update(newTitle, newContent);
+        // 도메인 객체가 권한 검증과 수정 담당
+        post.update(newTitle, newContent, currentUser);
+        // JPA 변경 감지로 자동 저장
     }
 
-    // [게시글 삭제]
     @Transactional
-    public void deletePost(Long postId, Long currentUserId) {
-        // 1. 글 찾기
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+    public void deletePost(Long postId, User currentUser) {
+        Post post = getPostOrThrow(postId);
 
-        // 2. 작성자 검증
-        if (!post.getUser().getId().equals(currentUserId)) {
-            throw new IllegalArgumentException("작성자만 삭제할 수 있습니다.");
-        }
+        // 권한 검증
+        post.validateOwnership(currentUser);
 
-        // 3. 삭제
         postRepository.delete(post);
     }
 }

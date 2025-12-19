@@ -76,7 +76,7 @@ public class PostController {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("회원이 아닙니다."));
 
-        postService.updatePost(postId, user.getId(), request.getTitle(), request.getContent());
+        postService.updatePost(postId, user, request.getTitle(), request.getContent());
         return "게시글 수정 완료!";
     }
 
@@ -91,7 +91,7 @@ public class PostController {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("회원이 아닙니다."));
 
-        postService.deletePost(postId, user.getId());
+        postService.deletePost(postId, user);
         return "게시글 삭제 완료!";
     }
 }
