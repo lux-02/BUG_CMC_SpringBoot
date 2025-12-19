@@ -1,0 +1,77 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Demo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // 아까 추가한 것
+
+    // Swagger (SpringDoc)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.h2database:h2' // H2 인메모리 DB 추가
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // [★ 중요] 이 줄이 없어서 테스트가 실행되지 않았습니다! 꼭 추가해주세요.
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Ensure core test artifacts (some annotations live in these modules)
+    testImplementation 'org.springframework.boot:spring-boot-test'
+    testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
+}
+
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+// [추가] Jacoco 설정 (맨 아래에 추가하세요)
+jacoco {
+    toolVersion = "0.8.11" // 자바 17 이상 호환 버전
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport' // 테스트 끝나면 바로 리포트 생성
+}
+
+jacocoTestReport {
+    dependsOn test // 리포트 만들려면 테스트가 먼저 실행돼야 함
+    reports {
+        html.required = true // HTML 리포트 생성 (사람용)
+        xml.required = false
+        csv.required = false
+    }
+
+    // (선택) 리포트에서 제외할 파일들 설정 (DTO, Config 등은 로직이 없어서 제외하기도 함)
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "**/dto/**",
+                    "**/config/**",
+                    "**/BoardApplication*"
+            ])
+        }))
+    }
+}

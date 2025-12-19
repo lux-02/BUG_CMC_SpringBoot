@@ -1,0 +1,63 @@
+// 게시판 서비스 ERD 설계 (DBML)
+
+Table users {
+  id bigint [pk, increment] // 사용자 고유 ID
+  email varchar(255) [not null, unique] // 이메일 (로그인 ID)
+  password varchar(255) [not null] // 암호화된 비밀번호
+  role varchar(50) [not null, default: 'USER'] // 권한 (USER, ADMIN)
+  created_at timestamp [not null, default: `now()`] // 생성일시
+
+  Note: '사용자 정보를 관리하는 테이블. Spring Security로 인증/인가 처리'
+}
+
+Table posts {
+  id bigint [pk, increment] // 게시글 고유 ID
+  title varchar(500) [not null] // 제목
+  content text [not null] // 내용
+  user_id bigint [not null, ref: > users.id] // 작성자 FK
+  category_id bigint [not null, ref: > categories.id] // 카테고리 FK
+  created_at timestamp [not null, default: `now()`] // 생성일시
+
+  Note: '게시글 테이블. 작성자와 카테고리 연관관계 포함'
+}
+
+Table comments {
+  id bigint [pk, increment] // 댓글 고유 ID
+  content text [not null] // 댓글 내용
+  user_id bigint [not null, ref: > users.id] // 작성자 FK
+  post_id bigint [not null, ref: > posts.id] // 게시글 FK
+  parent_id bigint [ref: > comments.id] // 부모 댓글 FK (대댓글용)
+  created_at timestamp [not null, default: `now()`] // 생성일시
+
+  Note: '댓글 및 대댓글 테이블. parent_id가 null이면 일반 댓글, 값이 있으면 대댓글'
+}
+
+Table categories {
+  id bigint [pk, increment] // 카테고리 고유 ID
+  name varchar(100) [not null, unique] // 카테고리명
+  created_at timestamp [not null, default: `now()`] // 생성일시
+
+  Note: '게시글 카테고리 테이블. 동적으로 추가 가능'
+}
+
+Table bookmarks {
+  id bigint [pk, increment] // 북마크 고유 ID
+  user_id bigint [not null, ref: > users.id] // 사용자 FK
+  post_id bigint [not null, ref: > posts.id] // 게시글 FK
+
+  Indexes {
+    (user_id, post_id) [unique] // 동일 사용자-게시글 조합은 유일해야 함
+  }
+
+  Note: '북마크 테이블. 사용자가 좋아하는 게시글을 저장'
+}
+
+// 연관관계 정리
+// 1. User (1) : Post (N) - 한 사용자가 여러 게시글 작성
+// 2. Category (1) : Post (N) - 한 카테고리에 여러 게시글
+// 3. User (1) : Comment (N) - 한 사용자가 여러 댓글 작성
+// 4. Post (1) : Comment (N) - 한 게시글에 여러 댓글
+// 5. Comment (1) : Comment (N) - 댓글에 대댓글 (자기참조)
+// 6. User (1) : Bookmark (N) - 한 사용자가 여러 북마크
+// 7. Post (1) : Bookmark (N) - 한 게시글이 여러 북마크에 포함
+
