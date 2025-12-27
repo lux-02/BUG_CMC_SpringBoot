@@ -54,7 +54,7 @@ class CommentControllerTest {
         given(commentService.writeComment(eq(request.getUserId()), eq(request.getPostId()), eq(request.getParentId()), eq(request.getContent()))).willReturn(generatedId);
 
         // When & Then
-        mockMvc.perform(post("/comments")
+        mockMvc.perform(post("/api/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(request)))

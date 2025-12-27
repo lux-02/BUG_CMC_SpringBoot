@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글쓰기 - 게시판</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- 네비게이션 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/web/posts">
+                <i class="bi bi-journal-text"></i> 게시판
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <span class="navbar-text text-light me-3">
+                            <i class="bi bi-person-circle"></i>
+                            <span sec:authentication="name"></span>님
+                        </span>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" href="/web/bookmarks">
+                            <i class="bi bi-star-fill text-warning"></i> 내 북마크
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/web/categories">
+                            <i class="bi bi-folder-fill"></i> 카테고리 관리
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm ms-2">
+                                <i class="bi bi-box-arrow-right"></i> 로그아웃
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-pencil-square"></i> 새 게시글 작성
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/web/posts}" method="post">
+                            <!-- 카테고리 선택 -->
+                            <div class="mb-4">
+                                <label for="categoryId" class="form-label">
+                                    <i class="bi bi-folder"></i> 카테고리 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-lg" id="categoryId" name="categoryId" required>
+                                    <option value="">카테고리를 선택하세요</option>
+                                    <option th:each="category : ${categories}"
+                                            th:value="${category.id}"
+                                            th:text="${category.name}">
+                                    </option>
+                                </select>
+                                <div class="form-text">게시글이 속할 카테고리를 선택해주세요.</div>
+                            </div>
+
+                            <!-- 제목 입력 -->
+                            <div class="mb-4">
+                                <label for="title" class="form-label">
+                                    <i class="bi bi-card-heading"></i> 제목 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="title" name="title"
+                                       placeholder="게시글 제목을 입력하세요" required maxlength="200">
+                                <div class="form-text">최대 200자까지 입력 가능합니다.</div>
+                            </div>
+
+                            <!-- 내용 입력 -->
+                            <div class="mb-4">
+                                <label for="content" class="form-label">
+                                    <i class="bi bi-textarea-t"></i> 내용 <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="content" name="content" rows="12"
+                                          placeholder="게시글 내용을 입력하세요" required></textarea>
+                                <div class="form-text">마크다운 형식은 지원하지 않습니다.</div>
+                            </div>
+
+                            <!-- 버튼 -->
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="/web/posts" class="btn btn-lg btn-secondary">
+                                    <i class="bi bi-x-circle"></i> 취소
+                                </a>
+                                <button type="submit" class="btn btn-lg btn-success">
+                                    <i class="bi bi-check-circle"></i> 작성하기
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 도움말 -->
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> 게시글 작성 가이드
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>적절한 카테고리를 선택해주세요.</li>
+                        <li>제목은 간결하고 명확하게 작성해주세요.</li>
+                        <li>내용은 다른 사람이 이해하기 쉽게 작성해주세요.</li>
+                        <li>욕설, 비방, 도배는 삼가주세요.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="bi bi-code-square"></i>
+                &copy; 2025 Spring Boot 게시판 프로젝트. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

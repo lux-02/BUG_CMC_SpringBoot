@@ -50,7 +50,7 @@ class CategoryControllerTest {
         given(categoryService.createCategory(eq("자유게시판"))).willReturn(generatedId);
 
         // When & Then
-        mockMvc.perform(post("/categories")
+        mockMvc.perform(post("/api/categories")
                         .param("name", categoryName)
                         .characterEncoding("UTF-8"))
                 .andExpect(status().isOk())

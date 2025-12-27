@@ -67,7 +67,7 @@ class PostControllerTest {
         given(postService.writePost(eq(1L), eq(1L), eq("테스트 제목"), eq("테스트 내용"))).willReturn(1L);
 
         // 2. When
-        mockMvc.perform(post("/posts")
+        mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonBody))
                 // 3. Then

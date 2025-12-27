@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>게시글 목록 - 게시판</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-color: #f9fafb;
+      }
+
+      .category-pills .btn {
+        border-radius: 50px;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #4b5563;
+        transition: all 0.2s;
+      }
+
+      .category-pills .btn:hover {
+        border-color: #4f46e5;
+        color: #4f46e5;
+      }
+
+      .category-pills .btn.active {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+      }
+
+      .post-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        height: 100%;
+      }
+
+      .post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+        border-color: #4f46e5;
+      }
+
+      .post-title {
+        color: #111827;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+        transition: color 0.2s;
+      }
+
+      .post-card:hover .post-title {
+        color: #4f46e5;
+      }
+
+      .post-content-preview {
+        color: #6b7280;
+        font-size: 0.95rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+      }
+
+      .post-meta {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        border-top: 1px solid #f3f4f6;
+        padding-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .user-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #4b5563;
+        font-weight: 500;
+      }
+
+      .user-avatar {
+        width: 24px;
+        height: 24px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+      }
+
+      .btn-write {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 네비게이션 바 -->
+    <nav
+      class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top"
+      style="background-color: #1f2937 !important"
+    >
+      <div class="container">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2"
+          href="/web/posts"
+        >
+          <i class="bi bi-intersect fs-3 text-primary"></i>
+          <span class="fw-bold text-white">BOARD.IO</span>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto align-items-center gap-2">
+            <li class="nav-item" sec:authorize="isAuthenticated()">
+              <div class="d-flex align-items-center text-white-50 me-2">
+                <i class="bi bi-person-circle fs-5 me-2"></i>
+                <span
+                  sec:authentication="name"
+                  class="small fw-medium text-white"
+                ></span
+                >님
+              </div>
+            </li>
+
+            <li class="nav-item" sec:authorize="isAuthenticated()">
+              <a
+                class="nav-link d-flex align-items-center gap-1 px-3"
+                href="/web/bookmarks"
+              >
+                <i class="bi bi-star-fill text-warning"></i>
+                <span>내 북마크</span>
+              </a>
+            </li>
+
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+              <a
+                class="nav-link d-flex align-items-center gap-1 px-3"
+                href="/web/categories"
+              >
+                <i class="bi bi-gear-fill"></i>
+                <span>설정</span>
+              </a>
+            </li>
+
+            <li class="nav-item ms-lg-2" sec:authorize="isAuthenticated()">
+              <form th:action="@{/logout}" method="post" class="d-inline">
+                <button
+                  type="submit"
+                  class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 px-3"
+                >
+                  <i class="bi bi-box-arrow-right"></i>
+                  <span>로그아웃</span>
+                </button>
+              </form>
+            </li>
+
+            <li class="nav-item" sec:authorize="isAnonymous()">
+              <a class="btn btn-primary btn-sm px-4 fw-bold" href="/login"
+                >시작하기</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container py-5 mt-3">
+      <!-- 알림 메시지 -->
+      <div
+        th:if="${message}"
+        class="alert alert-success alert-dismissible fade show mb-4"
+        role="alert"
+      >
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle-fill"></i>
+          <span th:text="${message}"></span>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+
+      <!-- 페이지 헤더 -->
+      <div class="mb-5 pt-2">
+        <h1 class="section-title text-gradient display-4 fw-bold">Discovery</h1>
+        <p class="text-muted fs-5">다양한 생각과 아이디어를 탐색해보세요.</p>
+      </div>
+
+      <!-- 카테고리 필터 -->
+      <div class="mb-5" th:if="${!categories.isEmpty()}">
+        <div class="category-pills d-flex flex-wrap align-items-center">
+          <a
+            href="/web/posts"
+            class="btn"
+            th:classappend="${selectedCategoryId == null} ? 'active' : ''"
+          >
+            전체
+          </a>
+          <a
+            th:each="category : ${categories}"
+            th:href="@{/web/posts(categoryId=${category.id})}"
+            th:text="${category.name}"
+            class="btn"
+            th:classappend="${selectedCategoryId == category.id} ? 'active' : ''"
+          >
+          </a>
+        </div>
+      </div>
+
+      <!-- 게시글 목록 -->
+      <div th:if="${posts.isEmpty()}" class="empty-state">
+        <i class="bi bi-wind"></i>
+        <h3 class="mt-3">아직 작성된 게시글이 없습니다.</h3>
+        <p>당신의 소중한 이야기를 첫 번째로 들려주세요.</p>
+        <a
+          sec:authorize="isAuthenticated()"
+          href="/web/posts/new"
+          class="btn btn-primary mt-3"
+        >
+          <i class="bi bi-pencil-square me-2"></i> 글쓰기
+        </a>
+      </div>
+
+      <div class="row g-4">
+        <div th:each="post : ${posts}" class="col-md-6 col-lg-4">
+          <div class="card post-card">
+            <div class="card-body d-flex flex-column p-4">
+              <div class="mb-3">
+                <span
+                  class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill small fw-semibold"
+                  th:text="${post.category.name}"
+                ></span>
+              </div>
+
+              <a
+                th:href="@{/web/posts/{id}(id=${post.id})}"
+                class="post-title"
+                th:text="${post.title}"
+              ></a>
+
+              <div class="post-content-preview" th:text="${post.content}"></div>
+
+              <div class="post-meta mt-auto">
+                <div class="user-badge">
+                  <div
+                    class="user-avatar"
+                    th:text="${#strings.substring(post.user.email, 0, 1).toUpperCase()}"
+                  ></div>
+                  <span
+                    class="small text-truncate"
+                    style="max-width: 100px"
+                    th:text="${post.user.email}"
+                  ></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-calendar3"></i>
+                  <span
+                    th:text="${#temporals.format(post.createdAt, 'MM.dd')}"
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Action Button -->
+      <a
+        sec:authorize="isAuthenticated()"
+        href="/web/posts/new"
+        class="btn btn-primary btn-write"
+      >
+        <i class="bi bi-plus-lg me-2"></i> 새 게시글 작성
+      </a>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

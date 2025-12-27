@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카테고리 관리 - 게시판</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f9fafb;
+        }
+
+        .category-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-item {
+            padding: 1.25rem;
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s;
+        }
+
+        .category-item:last-child {
+            border-bottom: none;
+        }
+
+        .category-item:hover {
+            background-color: #f9fafb;
+            transform: translateX(4px);
+        }
+
+        .stat-card {
+            border: none;
+            border-radius: 16px;
+            padding: 1.5rem;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 네비게이션 -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top" style="background-color: #1f2937 !important;">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/web/posts">
+                <i class="bi bi-intersect fs-3 text-primary"></i>
+                <span class="fw-bold text-white">BOARD.IO</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <div class="d-flex align-items-center text-white-50 me-2">
+                            <i class="bi bi-person-circle fs-5 me-2"></i>
+                            <span sec:authentication="name" class="small fw-medium text-white"></span>님
+                        </div>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link d-flex align-items-center gap-1 px-3" href="/web/bookmarks">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <span>내 북마크</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link active d-flex align-items-center gap-1 px-3" href="/web/categories">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>설정</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item ms-lg-2" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 px-3">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>로그아웃</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="btn btn-primary btn-sm px-4 fw-bold" href="/login">시작하기</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container py-5 mt-3">
+        <!-- 알림 메시지 -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${message}"></span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="mb-5 pt-2">
+            <h1 class="section-title text-gradient display-4 fw-bold">Category Management</h1>
+            <p class="text-muted fs-5">콘텐츠 분류를 위한 카테고리를 관리합니다.</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- 카테고리 추가 -->
+            <div class="col-lg-5">
+                <div class="card category-card p-4">
+                    <h5 class="fw-bold mb-4">새 카테고리 추가</h5>
+                    <form th:action="@{/web/categories}" method="post">
+                        <div class="mb-4">
+                            <label for="name" class="form-label small fw-semibold text-muted text-uppercase">카테고리 이름</label>
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="name" name="name"
+                                   placeholder="예: 자유게시판, 공지사항" required style="border-radius: 12px;">
+                            <div class="form-text mt-2">간결하고 명확한 이름을 사용하세요.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-3">
+                            카테고리 생성하기
+                        </button>
+                    </form>
+
+                    <div class="mt-5 p-3 rounded-3 bg-primary-subtle border border-primary-subtle">
+                        <div class="d-flex gap-3">
+                            <i class="bi bi-shield-lock-fill text-primary fs-4"></i>
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1">ADMIN ONLY</h6>
+                                <p class="small text-primary-emphasis mb-0 opacity-75">이 페이지는 관리자 전용입니다. 신중하게 작업해주세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 카테고리 목록 -->
+            <div class="col-lg-7">
+                <div class="card category-card">
+                    <div class="card-header bg-white border-0 p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0">등록된 카테고리</h5>
+                            <span class="badge bg-light text-primary px-3 py-2 rounded-pill" th:text="${categories.size() + ' Active'}"></span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${categories.isEmpty()}" class="text-center py-5 text-muted">
+                            <i class="bi bi-folder-x fs-1 opacity-25"></i>
+                            <p class="mt-3">등록된 카테고리가 없습니다.</p>
+                        </div>
+
+                        <div class="list-group list-group-flush">
+                            <div th:each="category : ${categories}"
+                                 class="category-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="icon-box mb-0 bg-light text-primary">
+                                        <i class="bi bi-folder2"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-0" th:text="${category.name}"></h6>
+                                        <small class="text-muted">ID: <code th:text="${category.id}"></code></small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill small fw-semibold">
+                                    활성화됨
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 통계 -->
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="stat-card">
+                            <div class="icon-box bg-primary-subtle text-primary">
+                                <i class="bi bi-layers"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" th:text="${categories.size()}">0</h3>
+                            <p class="text-muted small mb-0">전체 카테고리 수</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card">
+                            <div class="icon-box bg-success-subtle text-success">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1">상태</h3>
+                            <p class="text-muted small mb-0">모든 서비스 정상</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="bi bi-code-square"></i>
+                &copy; 2025 Spring Boot 게시판 프로젝트. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

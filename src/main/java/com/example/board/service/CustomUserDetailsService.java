@@ -19,8 +19,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email) // 이 메서드는 UserRepository에 추가해야 함!
-                .orElseThrow(() -> new UsernameNotFoundException("해당 유저가 없습니다: " + email));
+        System.out.println("로그인 시도 이메일: " + email);
+        User user = userRepository.findByEmail(email) 
+                .orElseThrow(() -> {
+                    System.out.println("해당 이메일의 유저를 찾을 수 없습니다: " + email);
+                    return new UsernameNotFoundException("해당 유저가 없습니다: " + email);
+                });
+        
+        System.out.println("유저 찾음: " + user.getEmail() + ", 역할: " + user.getRole());
 
         // 2. 시큐리티가 이해할 수 있는 UserDetails 객체로 변환해서 반환
         return org.springframework.security.core.userdetails.User.builder()

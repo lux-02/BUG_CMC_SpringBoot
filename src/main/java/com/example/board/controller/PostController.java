@@ -14,13 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor // 생성자 주입 자동화 (lombok)
 public class PostController {
 
     private final PostService postService;
     private final UserRepository userRepository;
 
-    // [글 쓰기] POST http://localhost:8080/posts
+    // [글 쓰기] POST http://localhost:8080/api/posts
     @PostMapping("/posts")
     public String writePost(
             @RequestBody PostRequestDto request, // ★ [수정] PostRequestDto로 변경

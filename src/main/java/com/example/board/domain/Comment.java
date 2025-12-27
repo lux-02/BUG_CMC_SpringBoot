@@ -47,9 +47,13 @@ public class Comment {
 
     public Long getId() { return id; }
     public String getContent() { return content; }
+    public User getUser() { return user; }
+    public Post getPost() { return post; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public Comment getParent() {
         return this.parent;
     }
 
 }
+

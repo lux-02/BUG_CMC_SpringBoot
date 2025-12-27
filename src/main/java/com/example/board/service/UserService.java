@@ -25,6 +25,12 @@ public class UserService {
 
     @Transactional
     public Long join(String email, String password, Role role) {
+        // [추가] 중복 회원 검증
+        userRepository.findByEmail(email).ifPresent(u -> {
+            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+        });
+
+        // passwordEncoder.encode(password)로 비밀번호를 암호화해서 저장! ("1234" -> "$2a$10$sdf32...")
         String encodedPassword = passwordEncoder.encode(password);
 
         // Builder 패턴 사용
